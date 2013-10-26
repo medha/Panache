@@ -33,6 +33,7 @@ public class ImageListViewActivity extends Activity {
 		
 		// Attach the adapter to a ListView
 		listView.setAdapter(adapter);
+//		listView.setDivider();
 	}
 
 	private void setupViews() {

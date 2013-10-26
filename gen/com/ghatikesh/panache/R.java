@@ -21,7 +21,19 @@ public final class R {
         public static final int activity_vertical_margin=0x7f040001;
     }
     public static final class drawable {
-        public static final int mush=0x7f020000;
+        public static final int activated_background_holo_light=0x7f020000;
+        public static final int fastscroll_thumb_default_holo=0x7f020001;
+        public static final int fastscroll_thumb_holo=0x7f020002;
+        public static final int fastscroll_thumb_pressed_holo=0x7f020003;
+        public static final int item_background_holo_light=0x7f020004;
+        public static final int list_activated_holo=0x7f020005;
+        public static final int list_focused_holo=0x7f020006;
+        public static final int list_longpressed_holo=0x7f020007;
+        public static final int list_pressed_holo_light=0x7f020008;
+        public static final int list_selector_background_transition_holo_light=0x7f020009;
+        public static final int list_selector_disabled_holo_light=0x7f02000a;
+        public static final int list_selector_holo_light=0x7f02000b;
+        public static final int mush=0x7f02000c;
     }
     public static final class id {
         public static final int imageView1=0x7f070001;
@@ -69,6 +81,9 @@ public final class R {
  All customizations that are NOT specific to a particular API-level can go here. 
          */
         public static final int AppTheme=0x7f060001;
+        public static final int GreenTheme=0x7f060007;
+        public static final int ListViewGreenTheme=0x7f060005;
+        public static final int ListViewGreenTheme_White=0x7f060006;
         public static final int Theme_Panache=0x7f060002;
         public static final int Theme_Panache_ActionBar=0x7f060003;
         public static final int Theme_Panache_ActionBar_TitleTextStyle=0x7f060004;

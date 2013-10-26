@@ -20,6 +20,9 @@
     
     <style name="Theme.Panache" parent="@android:style/Theme.Holo.Light.DarkActionBar">
        <item name="android:actionBarStyle">@style/Theme.Panache.ActionBar</item>
+           <item name="android:listViewStyle">@style/ListViewGreenTheme</item>
+    <item name="android:listViewWhiteStyle">@style/ListViewGreenTheme.White</item>
+        
     </style>
 
     <style name="Theme.Panache.ActionBar" parent="@android:style/Widget.Holo.Light.ActionBar">
@@ -31,4 +34,12 @@
         <item name="android:textColor">#ffffff</item>
     </style>
     
+   <style name="ListViewGreenTheme" parent="android:Widget.ListView">
+      <item name="android:listSelector">@drawable/list_selector_holo_light</item>
+  </style>
+
+  <style name="ListViewGreenTheme.White" parent="android:Widget.ListView.White">
+      <item name="android:listSelector">@drawable/list_selector_holo_light</item>
+  </style>
+
 </resources>

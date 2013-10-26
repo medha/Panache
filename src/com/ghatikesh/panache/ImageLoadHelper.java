@@ -1,5 +1,6 @@
 package com.ghatikesh.panache;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -91,7 +92,7 @@ public class ImageLoadHelper {
 
 				// Add final bitmap to caches
 				addBitmapToCache(imageKey, bitmap);
-				addBitmapToMemoryCache(String.valueOf(addresses[0]), bitmap);
+				//addBitmapToMemoryCache(String.valueOf(addresses[0]), bitmap);
 			}
 			// Return bitmap result
 			return bitmap;
@@ -124,9 +125,27 @@ public class ImageLoadHelper {
 		private Bitmap decodeBitmap(InputStream in, URL url) {
 			Bitmap bitmap;
 			try {
-				bitmap = BitmapFactory.decodeStream(in);
-				// Close the input stream
+				// Creating a BufferedInputStream stream as we need to read the
+				// input stream twice and InputStream doesn't support that
+				// (unless you close and reopen it again which takes time)
+				BufferedInputStream bis = new BufferedInputStream(in);
+
+				// First decode with inJustDecodeBounds=true to check dimensions
+				final BitmapFactory.Options options = new BitmapFactory.Options();
+				options.inJustDecodeBounds = true;
+				BitmapFactory.decodeStream(bis, null, options);
+
+				// Calculate inSampleSize
+				options.inSampleSize = calculateInSampleSize(options, 50, 50);
+
+				// Decode bitmap with inSampleSize set
+				options.inJustDecodeBounds = false;
+
+				bis.reset(); // so that we can read the stream again
+				bitmap = BitmapFactory.decodeStream(bis, null, options);
+				// Close the streams
 				in.close();
+				bis.close();
 			} catch (IOException e) {
 				in = null;
 				bitmap = null;
@@ -149,42 +168,42 @@ public class ImageLoadHelper {
 		}
 	}
 
-	public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
-		if (getBitmapFromMemCache(key) == null) {
-			memoryCache.put(key, bitmap);
+	public static int calculateInSampleSize(BitmapFactory.Options options,
+			int reqWidth, int reqHeight) {
+		// Raw height and width of image
+		final int height = options.outHeight;
+		final int width = options.outWidth;
+		int inSampleSize = 1;
+
+		if (height > reqHeight || width > reqWidth) {
+
+			// Calculate ratios of height and width to requested height and
+			// width
+			final int heightRatio = Math.round((float) height
+					/ (float) reqHeight);
+			final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+			// Choose the smallest ratio as inSampleSize value, this will
+			// guarantee
+			// a final image with both dimensions larger than or equal to the
+			// requested height and width.
+			if (heightRatio < widthRatio) {
+				inSampleSize = heightRatio;
+			} else {
+				inSampleSize = widthRatio;
+			}
 		}
+		inSampleSize = (int) Math.pow(2d,
+				Math.floor(Math.log(inSampleSize) / Math.log(2d)));
+		return inSampleSize;
 	}
-
-	public static int calculateInSampleSize(
-            BitmapFactory.Options options, int reqWidth, int reqHeight) {
-    // Raw height and width of image
-    final int height = options.outHeight;
-    final int width = options.outWidth;
-    int inSampleSize = 1;
-
-    if (height > reqHeight || width > reqWidth) {
-
-        // Calculate ratios of height and width to requested height and width
-        final int heightRatio = Math.round((float) height / (float) reqHeight);
-        final int widthRatio = Math.round((float) width / (float) reqWidth);
-
-        // Choose the smallest ratio as inSampleSize value, this will guarantee
-        // a final image with both dimensions larger than or equal to the
-        // requested height and width.
-        if( heightRatio < widthRatio ) {
-        	inSampleSize = heightRatio;
-        } else {
-        	inSampleSize = widthRatio;
-        }
-    }
-
-    return inSampleSize;
-}
 
 	public void addBitmapToCache(String key, Bitmap bitmap) {
 		// Add to memory diskCache as before
 		if (getBitmapFromMemCache(key) == null) {
-			memoryCache.put(key, bitmap);
+			if(bitmap!=null) {
+				memoryCache.put(key, bitmap);
+			}
 		}
 
 		// Also add to disk diskCache
@@ -231,7 +250,7 @@ public class ImageLoadHelper {
 	}
 
 	/**
-	 * Get max available VM memory, and use 1/6th of it for the memory cache.
+	 * Get max available VM memory, and use 1/8th of it for the memory cache.
 	 * Exceeding the max available memory will throw an OutOfMemory exception.
 	 * Stored in kilobytes as LruCache takes an int in its constructor.
 	 * 
@@ -239,7 +258,7 @@ public class ImageLoadHelper {
 	 */
 	private LruCache<String, Bitmap> setupMemoryCache() {
 		final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-		final int cacheSize = maxMemory / 6;
+		final int cacheSize = maxMemory / 8;
 
 		return new LruCache<String, Bitmap>(cacheSize) {
 			@Override
