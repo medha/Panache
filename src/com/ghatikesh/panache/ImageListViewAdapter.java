@@ -12,7 +12,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -35,7 +34,6 @@ public class ImageListViewAdapter extends ArrayAdapter<Image> {
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		// Get the data item
-//		String address = getItem(position);
 		Image image = getItem(position);
 		
 		// Populate the data into the template view using the data object
@@ -116,7 +114,6 @@ public class ImageListViewAdapter extends ArrayAdapter<Image> {
 			} catch (MalformedURLException e1) {
 				url = null;
 			}
-			System.out.println("reutrning url for address: " + address);
 			return url;
 		}
 
@@ -131,7 +128,6 @@ public class ImageListViewAdapter extends ArrayAdapter<Image> {
 			} catch (IOException e) {
 				in = null;
 			}
-			System.out.println("Returning Input Stream for url: " + url);
 			return in;
 		}
 
@@ -139,7 +135,6 @@ public class ImageListViewAdapter extends ArrayAdapter<Image> {
 			Bitmap bitmap;
 			try {
 				// Turn response into Bitmap
-				//bitmap = decodeSampledBitmapFromResource(in, 50, 50);
 				bitmap = BitmapFactory.decodeStream(in);
 				// Close the input stream
 				in.close();
@@ -163,50 +158,6 @@ public class ImageListViewAdapter extends ArrayAdapter<Image> {
 			}
 			
 		}
-		
-		
-		public Bitmap decodeSampledBitmapFromResource(InputStream is, int reqWidth, int reqHeight) {
-
-		    // First decode with inJustDecodeBounds=true to check dimensions
-		    final BitmapFactory.Options options = new BitmapFactory.Options();
-		    options.inJustDecodeBounds = true;
-		    BitmapFactory.decodeStream(is, null, options);
-
-		    // Calculate inSampleSize
-		    options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-
-		    // Decode bitmap with inSampleSize set
-		    options.inJustDecodeBounds = false;
-		    Bitmap bitmap =  BitmapFactory.decodeStream(is, null, options); 
-		    return bitmap;
-		}
-		
-		public int calculateInSampleSize(
-	            BitmapFactory.Options options, int reqWidth, int reqHeight) {
-	    // Raw height and width of image
-	    final int height = options.outHeight;
-	    final int width = options.outWidth;
-	    int inSampleSize = 1;
-
-	    if (height > reqHeight || width > reqWidth) {
-
-	        // Calculate ratios of height and width to requested height and width
-	        final int heightRatio = Math.round((float) height / (float) reqHeight);
-	        final int widthRatio = Math.round((float) width / (float) reqWidth);
-
-	        // Choose the smallest ratio as inSampleSize value, this will guarantee
-	        // a final image with both dimensions larger than or equal to the
-	        // requested height and width.
-	        if( heightRatio < widthRatio ) {
-	        	inSampleSize = heightRatio;
-	        } else {
-	        	inSampleSize = widthRatio;
-	        }
-	    }
-
-	    return inSampleSize;
-	}
-
 }
 	
 	private class DownloadedDrawable extends ColorDrawable {
