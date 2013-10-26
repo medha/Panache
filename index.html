@@ -46,34 +46,42 @@
 
 
       <section id="main_content">
-        <h3>
-<a name="welcome-to-panache" class="anchor" href="#welcome-to-panache"><span class="octicon octicon-link"></span></a>Welcome to Panache!</h3>
+        <h2>
+<a name="welcome-to-panache" class="anchor" href="#welcome-to-panache"><span class="octicon octicon-link"></span></a>Welcome to Panache!</h2>
 
 <p>Panache loads images from the web and displays them in a ListView. It supports asynchronous loading of images, loads a scaled down version of the image to improve download speed, handles multithreading complexities introduced by the ListView and uses both memory and disk caching to speed things up.</p>
 
 <p>It does not use any third party library such as the <a href="https://github.com/nostra13/Android-Universal-Image-Loader">Universal Image Loader</a> to do this. </p>
 
-<p>Things I like about this app:
-1. Panache loads scaled down versions of images into memory. It calculates the dimension of the image required to display it on the ListView, and then downloads a scaled down version, reducing performance overheads. 
-2. Memory and Disk caching is used to improve the scrolling experience. The scaled down images are cached, and when you scroll up and down once the images have downloaded the first time, the images don't flicker and the scrolling is really smooth.
-3. Panache uses asynchronous loading of images, and the images are processed off the UI thread such that the UI remains responsive throughout the download.
-4. When components such as the ListView or GridView are used along with asynchronous tasks, there are some multithreading issues that are introduced. For example, the ListView recycles the child views every time the user scrolls, causing images to appear in the wrong places and other buggy behavior. Panache handles Panache handles these concurrency issues by making sure that no other asynchronous task is already responsible for a particular image view. 
-5. Custom ActionBar color, title and launcher icons. "Long pressing" an item on the ListView displays a color that matches the ActionBar. The ListView divider also has the same green color. I especially like the Panache logo that was chosen keeping the spirit of Movember in mind!</p>
+<p><strong>Things I like about this app:</strong></p>
 
-<p>What can be improved:
-1. The initial download of images is still a little choppy. It would be good to research what other techniques exist apart from the ones already used to improve the download speed.
-2. The UI can be improved by using larger images, and better formatting of text for the image names.
-3. It would be better to parse the image names out of the URL itself. I now cheat a bit and include it separately.</p>
+<ol>
+<li><p>Panache loads scaled down versions of images into memory. It calculates the dimension of the image required to display it on the ListView, and then downloads a scaled down version, reducing performance overheads. </p></li>
+<li><p>Memory and Disk caching is used to improve the scrolling experience. The scaled down images are cached, and when you scroll up and down once the images have downloaded the first time, the images don't flicker and the scrolling is really smooth.</p></li>
+<li><p>Panache uses asynchronous loading of images, and the images are processed off the UI thread such that the UI remains responsive throughout the download.</p></li>
+<li><p>When components such as the ListView or GridView are used along with asynchronous tasks, there are some multithreading issues that are introduced. For example, the ListView recycles the child views every time the user scrolls, causing images to appear in the wrong places and other buggy behavior. Panache handles Panache handles these concurrency issues by making sure that no other asynchronous task is already responsible for a particular image view. </p></li>
+<li><p>Custom ActionBar color, title and launcher icons. "Long pressing" an item on the ListView displays a color that matches the ActionBar. The ListView divider also has the same green color. I especially like the Panache logo that was chosen keeping the spirit of Movember in mind!</p></li>
+</ol><p><strong>What can be improved:</strong></p>
 
-<p>Testing the app:
-1. Test for OutOfMemory errors thrown by the memory cache by downloading images of very large size
-2. Test downloads in both phone orientations
-3. Test for running out of disk space by downloading long list of large images</p>
+<ol>
+<li><p>The initial download of images is still a little choppy. It would be good to research what other techniques exist apart from the ones already used to improve the download speed.</p></li>
+<li><p>The UI can be improved by using larger images, and better formatting of text for the image names.</p></li>
+<li><p>It would be better to parse the image names out of the URL itself. I now cheat a bit and include it separately.</p></li>
+</ol><p><strong>Testing the app:</strong></p>
 
-<p>References: </p>
+<ol>
+<li><p>Test for OutOfMemory errors thrown by the memory cache by downloading images of very large size</p></li>
+<li><p>Test downloads in both phone orientations</p></li>
+<li><p>Test for running out of disk space by downloading long list of large images</p></li>
+</ol><p><strong>References:</strong></p>
 
 <ul>
-<li>
+<li><a href="http://developer.android.com/training/displaying-bitmaps/load-bitmap.html">http://developer.android.com/training/displaying-bitmaps/load-bitmap.html</a></li>
+<li><a href="http://developer.android.com/training/displaying-bitmaps/process-bitmap.html">http://developer.android.com/training/displaying-bitmaps/process-bitmap.html</a></li>
+<li><a href="http://developer.android.com/training/displaying-bitmaps/cache-bitmap.html">http://developer.android.com/training/displaying-bitmaps/cache-bitmap.html</a></li>
+<li><a href="http://android-developers.blogspot.com/2010/07/multithreading-for-performance.html">http://android-developers.blogspot.com/2010/07/multithreading-for-performance.html</a></li>
+<li><a href="https://github.com/thecodepath/android_guides/wiki/Sending-and-Managing-Network-Requests#displaying-remote-images-the-hard-way">https://github.com/thecodepath/android_guides/wiki/Sending-and-Managing-Network-Requests#displaying-remote-images-the-hard-way</a></li>
+<li><a href="http://androidsnips.blogspot.com/2010/08/lazy-loading-of-images-in-list-view-in.html">http://androidsnips.blogspot.com/2010/08/lazy-loading-of-images-in-list-view-in.html</a></li>
 </ul>
       </section>
 
