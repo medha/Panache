@@ -2,10 +2,14 @@ package com.ghatikesh.panache;
 
 import java.util.ArrayList;
 
-import android.app.ActionBar;
 import android.app.Activity;
+import android.content.Context;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.ListView;
+import android.widget.TextView;
 
 public class ImageListViewActivity extends Activity {
 
@@ -16,13 +20,24 @@ public class ImageListViewActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_image_list_view);
 		
-		ActionBar actionBar = getActionBar();
-//		actionBar.set
+		this.getActionBar().setDisplayShowCustomEnabled(true);
+		this.getActionBar().setDisplayShowTitleEnabled(false);
+		
+		LayoutInflater inflator = (LayoutInflater)this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		View v = inflator.inflate(R.layout.custom_text_view, null);
+
+		//if you need to customize anything else about the text, do it here.
+		//I'm using a custom TextView with a custom font in my layout xml so all I need to do is set title
+		TextView titleView = (TextView) v.findViewById(R.id.title);
+		titleView.setText(this.getTitle());
+		
+		//assign the view to the actionbar
+		this.getActionBar().setCustomView(v);
 		
 		//Model View Controller pattern
 		
 		// M: Create the data source
-		ArrayList <String> images = getImages();
+		ArrayList<Image> images = Image.getImages();
 		
 		// V: setup the views
 		setupViews();
@@ -32,31 +47,6 @@ public class ImageListViewActivity extends Activity {
 		// Attach the adapter to a ListView
 		
 		listView.setAdapter(adapter);
-	}
-
-	private ArrayList<String> getImages() {
-		ArrayList<String> images = new ArrayList<String>();
-		images.add("http://i.imgur.com/IFD14.jpg");
-		images.add("http://i.imgur.com/LjFRNha.jpg");
-		images.add("http://i.imgur.com/EwNtfRg.jpg");
-		images.add("http://i.imgur.com/mvvvzev.jpg");
-		images.add("http://i.imgur.com/tSnq7DN.jpg");
-		images.add("http://i.imgur.com/xZluhvb.jpg");
-		images.add("http://i.imgur.com/Sa4051z.jpg");
-		images.add("http://i.imgur.com/fZVtcV8.jpg");
-		images.add("http://i.imgur.com/5o5CWCH.jpg");
-		images.add("http://i.imgur.com/czV6ehQ.jpg");
-		images.add("http://i.imgur.com/EUKwR9q.jpg");
-		images.add("http://i.imgur.com/F4ism2b.jpg");
-		images.add("http://i.imgur.com/v4kuFJA.jpg");
-		images.add("http://i.imgur.com/dD07qwb.jpg");
-		images.add("http://i.imgur.com/l73Dt6e.jpg");
-		images.add("http://i.imgur.com/04g2yoo.jpg");
-		images.add("http://i.imgur.com/6g9l7g0.jpg");
-		images.add("http://i.imgur.com/9CUEgtX.jpg");
-		images.add("http://i.imgur.com/vrxUHRW.jpg");
-		images.add("http://i.imgur.com/zJ38KNr.jpg");
-		return images;
 	}
 
 	private void setupViews() {

@@ -12,6 +12,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -20,43 +21,41 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.TextView;
 
-public class ImageListViewAdapter extends ArrayAdapter<String> {
+public class ImageListViewAdapter extends ArrayAdapter<Image> {
 
 	private ImageView ivImage;
-
-	public ImageListViewAdapter(Context context, List<String> images) {
+	
+	
+	public ImageListViewAdapter(Context context, List<Image> images) {
 		super(context, R.layout.activity_image_list_view, images);
 	}
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-
 		// Get the data item
-		String address = getItem(position);
-		System.out.println("Get View method: get item position: " + position + " address: " +  address  );
+//		String address = getItem(position);
+		Image image = getItem(position);
+		
 		// Populate the data into the template view using the data object
-		View view;
-
-		if (convertView == null) { // Check if an existing view is being reused,
-									// otherwise inflate the view
+		View view = convertView;
+		if (convertView == null) { 
 			LayoutInflater inflater = LayoutInflater.from(getContext());
 			view = inflater.inflate(R.layout.image_row_item, parent, false);
-		} else {
-			view = convertView;
 		}
 
-		// TextView tvTitle = (TextView) view.findViewById(R.id.tvTitle);
-		// tvTitle.setText(image.getFilename());
-
-		
+		 TextView tvTitle = (TextView) view.findViewById(R.id.tvImageTitle);
+		 tvTitle.setText(image.getFilename());
+		 
 		ivImage = (ImageView) view.findViewById(R.id.ivImage);
-		loadBitmap(address, ivImage);
+		loadBitmap(image.getUrl(), ivImage);
 		
 		return view;
 	}
+	
 
-	public void loadBitmap(String url, ImageView imageView) {
+	private void loadBitmap(String url, ImageView imageView) {
 		if (cancelPotentialDownload(url, imageView)) {
 			BitmapDownloaderTask task = new BitmapDownloaderTask(imageView);
 	         DownloadedDrawable downloadedDrawable = new DownloadedDrawable(task);
@@ -80,7 +79,7 @@ public class ImageListViewAdapter extends ArrayAdapter<String> {
 	    return true;
 	}
 	
-	private static BitmapDownloaderTask getBitmapDownloaderTask(ImageView imageView) {
+	static BitmapDownloaderTask getBitmapDownloaderTask(ImageView imageView) {
 	    if (imageView != null) {
 	        Drawable drawable = imageView.getDrawable();
 	        if (drawable instanceof DownloadedDrawable) {
@@ -93,7 +92,7 @@ public class ImageListViewAdapter extends ArrayAdapter<String> {
 	
 	private class BitmapDownloaderTask extends AsyncTask<String, Void, Bitmap> {
 		 private final WeakReference<ImageView> ivImage;
-		 private String url;
+		 String url;
 		
 		public BitmapDownloaderTask(ImageView ivImage) {
 			this.ivImage = new WeakReference<ImageView>(ivImage	);
@@ -156,7 +155,7 @@ public class ImageListViewAdapter extends ArrayAdapter<String> {
 		protected void onPostExecute(Bitmap bitmap) {
 			if (ivImage != null) {
 			    ImageView imageView = ivImage.get();
-			    BitmapDownloaderTask bitmapDownloaderTask = getBitmapDownloaderTask(imageView);
+			    BitmapDownloaderTask bitmapDownloaderTask = ImageListViewAdapter.getBitmapDownloaderTask(imageView);
 			    // Change bitmap only if this process is still associated with it
 			    if (this == bitmapDownloaderTask) {
 			        imageView.setImageBitmap(bitmap);
@@ -207,9 +206,10 @@ public class ImageListViewAdapter extends ArrayAdapter<String> {
 
 	    return inSampleSize;
 	}
-	}
+
+}
 	
-	static class DownloadedDrawable extends ColorDrawable {
+	private class DownloadedDrawable extends ColorDrawable {
 	    private final WeakReference<BitmapDownloaderTask> imageDownloaderTaskReference;
 
 	    public DownloadedDrawable(BitmapDownloaderTask bitmapDownloaderTask) {
