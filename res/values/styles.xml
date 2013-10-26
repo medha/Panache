@@ -22,8 +22,13 @@
        <item name="android:actionBarStyle">@style/Theme.Panache.ActionBar</item>
     </style>
 
-    <style name="Theme.Panache.ActionBar" parent="@android:style/Widget.Holo.ActionBar">
+    <style name="Theme.Panache.ActionBar" parent="@android:style/Widget.Holo.Light.ActionBar">
        <item name="android:background">#A4C739</item>
+       <item name="android:titleTextStyle">@style/Theme.Panache.ActionBar.TitleTextStyle</item>
+    </style>
+      
+   <style name="Theme.Panache.ActionBar.TitleTextStyle" parent="android:style/TextAppearance.Holo.Widget.ActionBar.Title">
+        <item name="android:textColor">#ffffff</item>
     </style>
     
 </resources>

@@ -2,16 +2,18 @@ package com.ghatikesh.panache;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
+import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -49,26 +51,57 @@ public class ImageListViewAdapter extends ArrayAdapter<String> {
 
 		
 		ivImage = (ImageView) view.findViewById(R.id.ivImage);
-		System.out.println("ImageView ID: " + ivImage.getId());
-
-		System.out.println("Calling image download task for: " + position);
-		new ImageDownloadTask().execute(address);
-		System.out.println("End Execute for: " + position);
-
+		loadBitmap(address, ivImage);
+		
 		return view;
 	}
 
-	private class ImageDownloadTask extends AsyncTask<String, Void, Bitmap> {
+	public void loadBitmap(String url, ImageView imageView) {
+		if (cancelPotentialDownload(url, imageView)) {
+			BitmapDownloaderTask task = new BitmapDownloaderTask(imageView);
+	         DownloadedDrawable downloadedDrawable = new DownloadedDrawable(task);
+	         imageView.setImageDrawable(downloadedDrawable);
+	         task.execute(url);
+	     }
+	}
+	
+	private static boolean cancelPotentialDownload(String url, ImageView imageView) {
+	    BitmapDownloaderTask bitmapDownloaderTask = getBitmapDownloaderTask(imageView);
 
-		protected void onPreExecute() {
-			// Runs on the UI thread before doInBackground
-			// Good for toggling visibility of a progress indicator
+	    if (bitmapDownloaderTask != null) {
+	        String bitmapUrl = bitmapDownloaderTask.url;
+	        if ((bitmapUrl == null) || (!bitmapUrl.equals(url))) {
+	            bitmapDownloaderTask.cancel(true);
+	        } else {
+	            // The same URL is already being downloaded.
+	            return false;
+	        }
+	    }
+	    return true;
+	}
+	
+	private static BitmapDownloaderTask getBitmapDownloaderTask(ImageView imageView) {
+	    if (imageView != null) {
+	        Drawable drawable = imageView.getDrawable();
+	        if (drawable instanceof DownloadedDrawable) {
+	            DownloadedDrawable downloadedDrawable = (DownloadedDrawable)drawable;
+	            return downloadedDrawable.getBitmapDownloaderTask();
+	        }
+	    }
+	    return null;
+	}
+	
+	private class BitmapDownloaderTask extends AsyncTask<String, Void, Bitmap> {
+		 private final WeakReference<ImageView> ivImage;
+		 private String url;
+		
+		public BitmapDownloaderTask(ImageView ivImage) {
+			this.ivImage = new WeakReference<ImageView>(ivImage	);
 		}
 
 		protected Bitmap doInBackground(String... addresses) {
 			// Convert string to URL
 			URL url = getUrlFromString(addresses[0]);
-			System.out.println("Doing in background. Url= " + url);
 			// Get input stream
 			InputStream in = getInputStream(url);
 			// Decode bitmap
@@ -107,6 +140,7 @@ public class ImageListViewAdapter extends ArrayAdapter<String> {
 			Bitmap bitmap;
 			try {
 				// Turn response into Bitmap
+				//bitmap = decodeSampledBitmapFromResource(in, 50, 50);
 				bitmap = BitmapFactory.decodeStream(in);
 				// Close the input stream
 				in.close();
@@ -119,13 +153,73 @@ public class ImageListViewAdapter extends ArrayAdapter<String> {
 		}
 
 		@Override
-		protected void onPostExecute(Bitmap result) {
-			// Set bitmap image for the result
+		protected void onPostExecute(Bitmap bitmap) {
 			if (ivImage != null) {
-				ivImage.setImageBitmap(result);
-				System.out.println("Setting image view to bitmap: " + ivImage.getId());
+			    ImageView imageView = ivImage.get();
+			    BitmapDownloaderTask bitmapDownloaderTask = getBitmapDownloaderTask(imageView);
+			    // Change bitmap only if this process is still associated with it
+			    if (this == bitmapDownloaderTask) {
+			        imageView.setImageBitmap(bitmap);
+			    }
 			}
+			
 		}
-	}
+		
+		
+		public Bitmap decodeSampledBitmapFromResource(InputStream is, int reqWidth, int reqHeight) {
 
+		    // First decode with inJustDecodeBounds=true to check dimensions
+		    final BitmapFactory.Options options = new BitmapFactory.Options();
+		    options.inJustDecodeBounds = true;
+		    BitmapFactory.decodeStream(is, null, options);
+
+		    // Calculate inSampleSize
+		    options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+		    // Decode bitmap with inSampleSize set
+		    options.inJustDecodeBounds = false;
+		    Bitmap bitmap =  BitmapFactory.decodeStream(is, null, options); 
+		    return bitmap;
+		}
+		
+		public int calculateInSampleSize(
+	            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+	    // Raw height and width of image
+	    final int height = options.outHeight;
+	    final int width = options.outWidth;
+	    int inSampleSize = 1;
+
+	    if (height > reqHeight || width > reqWidth) {
+
+	        // Calculate ratios of height and width to requested height and width
+	        final int heightRatio = Math.round((float) height / (float) reqHeight);
+	        final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+	        // Choose the smallest ratio as inSampleSize value, this will guarantee
+	        // a final image with both dimensions larger than or equal to the
+	        // requested height and width.
+	        if( heightRatio < widthRatio ) {
+	        	inSampleSize = heightRatio;
+	        } else {
+	        	inSampleSize = widthRatio;
+	        }
+	    }
+
+	    return inSampleSize;
+	}
+	}
+	
+	static class DownloadedDrawable extends ColorDrawable {
+	    private final WeakReference<BitmapDownloaderTask> imageDownloaderTaskReference;
+
+	    public DownloadedDrawable(BitmapDownloaderTask bitmapDownloaderTask) {
+	        super(Color.WHITE);
+	        imageDownloaderTaskReference =
+	            new WeakReference<BitmapDownloaderTask>(bitmapDownloaderTask);
+	    }
+
+	    public BitmapDownloaderTask getBitmapDownloaderTask() {
+	        return imageDownloaderTaskReference.get();
+	    }
+	}
 }
