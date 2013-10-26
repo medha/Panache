@@ -4,7 +4,9 @@ import java.util.ArrayList;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.util.LruCache;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ListView;
@@ -14,6 +16,7 @@ public class ImageListViewActivity extends Activity {
 
 	private ListView listView;
 
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -51,5 +54,5 @@ public class ImageListViewActivity extends Activity {
 	private void setupViews() {
 		listView = (ListView) findViewById(R.id.lvImageList);
 	}
-	
+
 }
