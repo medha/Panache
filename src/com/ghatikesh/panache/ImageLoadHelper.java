@@ -21,34 +21,18 @@ import android.widget.ImageView;
 
 public class ImageLoadHelper {
 
-	private LruCache<String, Bitmap> mMemoryCache;
-	private final Object mDiskCacheLock = new Object();
-	private static final String DISK_CACHE_SUBDIR = "panache";
-	private HashMap<String, Bitmap> cache = new HashMap<String, Bitmap>();
+	private LruCache<String, Bitmap> memoryCache;
+	private HashMap<String, Bitmap> diskCache = new HashMap<String, Bitmap>();
 	private static File cacheDir;
+	private static final String DISK_CACHE_SUBDIR = "panache";
+	private final Object diskCacheLock = new Object();
 
 	public ImageLoadHelper(Context context) {
-		// Get max available VM memory, exceeding this amount will throw an
-		// OutOfMemory exception. Stored in kilobytes as LruCache takes an
-		// int in its constructor.
-		final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-
-		// Use 1/8th of the available memory for this memory cache.
-		final int cacheSize = maxMemory / 6;
-
-		mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
-			@Override
-			protected int sizeOf(String key, Bitmap bitmap) {
-				// The cache size will be measured in kilobytes rather than
-				// number of items.
-				return bitmap.getByteCount() / 1024;
-			}
-		};
-
-		// Initialize disk cache on background thread
-		cacheDir = getDiskCacheDir(context, DISK_CACHE_SUBDIR);
+		// Setup the memory and disk diskCache
+		memoryCache = setupMemoryCache();
+		cacheDir = setupDiskCache(context, DISK_CACHE_SUBDIR);
 	}
-	
+
 	public void loadBitmap(String url, ImageView imageView) {
 		final String imageKey = url;
 
@@ -62,9 +46,9 @@ public class ImageLoadHelper {
 			task.execute(url);
 		}
 	}
-	
+
 	public Bitmap getBitmapFromMemCache(String key) {
-		return mMemoryCache.get(key);
+		return memoryCache.get(key);
 	}
 
 	private static boolean cancelPotentialDownload(String url,
@@ -82,7 +66,7 @@ public class ImageLoadHelper {
 		}
 		return true;
 	}
-	
+
 	private class BitmapDownloaderTask extends AsyncTask<String, Void, Bitmap> {
 		private final WeakReference<ImageView> ivImage;
 		String url;
@@ -93,24 +77,23 @@ public class ImageLoadHelper {
 
 		protected Bitmap doInBackground(String... addresses) {
 			final String imageKey = addresses[0];
-			// Check disk cache in background thread
+			// Check disk diskCache in background thread
 			Bitmap bitmap = getBitmapFromDiskCache(imageKey);
 
-			if (bitmap == null) { // Not found in disk cache, so Process as
+			if (bitmap == null) { // Not found in disk diskCache, so Process as
 									// normal
 				// Convert string to URL
 				URL url = getUrlFromString(addresses[0]);
 				// Get input stream
 				InputStream in = getInputStream(url);
 				// Decode bitmap
-				bitmap = decodeBitmap(in);
+				bitmap = decodeBitmap(in, url);
 
 				// Add final bitmap to caches
 				addBitmapToCache(imageKey, bitmap);
 				addBitmapToMemoryCache(String.valueOf(addresses[0]), bitmap);
 			}
 			// Return bitmap result
-
 			return bitmap;
 		}
 
@@ -138,10 +121,9 @@ public class ImageLoadHelper {
 			return in;
 		}
 
-		private Bitmap decodeBitmap(InputStream in) {
+		private Bitmap decodeBitmap(InputStream in, URL url) {
 			Bitmap bitmap;
 			try {
-				// Turn response into Bitmap
 				bitmap = BitmapFactory.decodeStream(in);
 				// Close the input stream
 				in.close();
@@ -149,7 +131,6 @@ public class ImageLoadHelper {
 				in = null;
 				bitmap = null;
 			}
-			System.out.println("Returning bitmap");
 			return bitmap;
 		}
 
@@ -167,37 +148,62 @@ public class ImageLoadHelper {
 
 		}
 	}
-	
+
 	public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
 		if (getBitmapFromMemCache(key) == null) {
-			mMemoryCache.put(key, bitmap);
+			memoryCache.put(key, bitmap);
 		}
 	}
 
+	public static int calculateInSampleSize(
+            BitmapFactory.Options options, int reqWidth, int reqHeight) {
+    // Raw height and width of image
+    final int height = options.outHeight;
+    final int width = options.outWidth;
+    int inSampleSize = 1;
+
+    if (height > reqHeight || width > reqWidth) {
+
+        // Calculate ratios of height and width to requested height and width
+        final int heightRatio = Math.round((float) height / (float) reqHeight);
+        final int widthRatio = Math.round((float) width / (float) reqWidth);
+
+        // Choose the smallest ratio as inSampleSize value, this will guarantee
+        // a final image with both dimensions larger than or equal to the
+        // requested height and width.
+        if( heightRatio < widthRatio ) {
+        	inSampleSize = heightRatio;
+        } else {
+        	inSampleSize = widthRatio;
+        }
+    }
+
+    return inSampleSize;
+}
+
 	public void addBitmapToCache(String key, Bitmap bitmap) {
-		// Add to memory cache as before
+		// Add to memory diskCache as before
 		if (getBitmapFromMemCache(key) == null) {
-			mMemoryCache.put(key, bitmap);
+			memoryCache.put(key, bitmap);
 		}
 
-		// Also add to disk cache
-		synchronized (mDiskCacheLock) {
-			if (cache != null && cache.get(key) == null) {
-				cache.put(key, bitmap);
+		// Also add to disk diskCache
+		synchronized (diskCacheLock) {
+			if (diskCache != null && diskCache.get(key) == null) {
+				diskCache.put(key, bitmap);
 			}
 		}
 	}
-	
+
 	public Bitmap getBitmapFromDiskCache(String key) {
-		synchronized (mDiskCacheLock) {
-			// Wait while disk cache is started from background thread
-			if (cache != null) {
-				return cache.get(key);
+		synchronized (diskCacheLock) {
+			// Wait while disk diskCache is started from background thread
+			if (diskCache != null) {
+				return diskCache.get(key);
 			}
 		}
 		return null;
 	}
-	
 
 	static BitmapDownloaderTask getBitmapDownloaderTask(ImageView imageView) {
 		if (imageView != null) {
@@ -209,7 +215,7 @@ public class ImageLoadHelper {
 		}
 		return null;
 	}
-	
+
 	private class DownloadedDrawable extends ColorDrawable {
 		private final WeakReference<BitmapDownloaderTask> imageDownloaderTaskReference;
 
@@ -223,21 +229,50 @@ public class ImageLoadHelper {
 			return imageDownloaderTaskReference.get();
 		}
 	}
-	
-	// Creates a unique subdirectory of the designated app cache directory.
-	// Tries to use external
-	// but if not mounted, falls back on internal storage.
-	public static File getDiskCacheDir(Context context, String uniqueName) {
-		 //Find the dir to save cached images
-        if (android.os.Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED)) {
-            cacheDir=new File(android.os.Environment.getExternalStorageDirectory(), uniqueName);
-        } else {
-            cacheDir= context.getCacheDir();
-        }
-        if (!cacheDir.exists()) {
-            cacheDir.mkdirs();
-        }
-        return cacheDir;
+
+	/**
+	 * Get max available VM memory, and use 1/6th of it for the memory cache.
+	 * Exceeding the max available memory will throw an OutOfMemory exception.
+	 * Stored in kilobytes as LruCache takes an int in its constructor.
+	 * 
+	 * @return LruChache
+	 */
+	private LruCache<String, Bitmap> setupMemoryCache() {
+		final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+		final int cacheSize = maxMemory / 6;
+
+		return new LruCache<String, Bitmap>(cacheSize) {
+			@Override
+			protected int sizeOf(String key, Bitmap bitmap) {
+				// The diskCache size will be measured in kilobytes rather than
+				// number of items.
+				return bitmap.getByteCount() / 1024;
+			}
+		};
+	}
+
+	/**
+	 * Creates a unique subdirectory of the designated app diskCache directory.
+	 * Tries to use external but if not mounted, falls back on internal storage.
+	 * 
+	 * @param context
+	 * @param subDir
+	 * @return File cacheDir
+	 */
+	public static File setupDiskCache(Context context, String subDir) {
+		// Find the dir to save cached images
+		if (android.os.Environment.getExternalStorageState().equals(
+				android.os.Environment.MEDIA_MOUNTED)) {
+			cacheDir = new File(
+					android.os.Environment.getExternalStorageDirectory(),
+					subDir);
+		} else {
+			cacheDir = context.getCacheDir();
+		}
+		if (!cacheDir.exists()) {
+			cacheDir.mkdirs();
+		}
+		return cacheDir;
 	}
 
 }

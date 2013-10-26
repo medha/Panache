@@ -10,7 +10,7 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_marginLeft="10dp"
-            android:textSize="30sp"
+            android:textSize="25sp"
             android:textColor="#ffffff"
             android:maxLines="1"
             android:ellipsize="end"

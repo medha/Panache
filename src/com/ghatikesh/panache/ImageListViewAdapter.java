@@ -25,22 +25,26 @@ public class ImageListViewAdapter extends ArrayAdapter<Image> {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		// Get the data item
+		// Get the data item for this position
 		Image image = getItem(position);
 
+		// Check if an existing view is being reused, otherwise inflate the view
 		View view = convertView;
 		if (convertView == null) {
 			LayoutInflater inflater = LayoutInflater.from(getContext());
 			view = inflater.inflate(R.layout.image_row_item, parent, false);
 		}
 
+		// Populate the data into the template view using the data object
 		TextView tvTitle = (TextView) view.findViewById(R.id.tvImageTitle);
 		tvTitle.setText(image.getFilename());
 
+		// Using a helper class 'ImageLoadHelper' to handle the image loading
+		// logic in a background thread that does not freeze the UI thread.
 		ivImage = (ImageView) view.findViewById(R.id.ivImage);
-
 		imageLoadHelper.loadBitmap(image.getUrl(), ivImage);
 
+		// Return the completed view to render on screen
 		return view;
 	}
 }
