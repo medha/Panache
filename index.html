@@ -56,10 +56,10 @@
 <p><strong>Things I like about this app:</strong></p>
 
 <ol>
-<li><p>Panache loads scaled down versions of images into memory. It calculates the dimension of the image required to display it on the ListView, and then downloads a scaled down version, reducing performance overheads. </p></li>
+<li><p>Panache loads scaled down versions of images into memory. It calculates the dimension of the image required to display it on the ListView, and then downloads a scaled down version, reducing unnecessary  overheads. </p></li>
 <li><p>Memory and Disk caching is used to improve the scrolling experience. The scaled down images are cached, and when you scroll up and down once the images have downloaded the first time, the images don't flicker and the scrolling is really smooth.</p></li>
 <li><p>Panache uses asynchronous loading of images, and the images are processed off the UI thread such that the UI remains responsive throughout the download.</p></li>
-<li><p>When components such as the ListView or GridView are used along with asynchronous tasks, there are some multithreading issues that are introduced. For example, the ListView recycles the child views every time the user scrolls, causing images to appear in the wrong places and other buggy behavior. Panache handles Panache handles these concurrency issues by making sure that no other asynchronous task is already responsible for a particular image view. </p></li>
+<li><p>When components such as the ListView or GridView are used along with asynchronous tasks, there are some multithreading issues that are introduced. For example, the ListView recycles the child views every time the user scrolls, causing several images to appear in the same ImageView. Panache handles these concurrency issues by remembering the order of the image downloads, and only the image from the last download is displayed for a given ImageView. </p></li>
 <li><p>Custom ActionBar color, title and launcher icons. "Long pressing" an item on the ListView displays a color that matches the ActionBar. The ListView divider also has the same green color. I especially like the Panache logo that was chosen keeping the spirit of Movember in mind!</p></li>
 </ol><p><strong>What can be improved:</strong></p>
 
@@ -73,16 +73,7 @@
 <li><p>Test for OutOfMemory errors thrown by the memory cache by downloading images of very large size</p></li>
 <li><p>Test downloads in both phone orientations</p></li>
 <li><p>Test for running out of disk space by downloading long list of large images</p></li>
-</ol><p><strong>References:</strong></p>
-
-<ul>
-<li><a href="http://developer.android.com/training/displaying-bitmaps/load-bitmap.html">http://developer.android.com/training/displaying-bitmaps/load-bitmap.html</a></li>
-<li><a href="http://developer.android.com/training/displaying-bitmaps/process-bitmap.html">http://developer.android.com/training/displaying-bitmaps/process-bitmap.html</a></li>
-<li><a href="http://developer.android.com/training/displaying-bitmaps/cache-bitmap.html">http://developer.android.com/training/displaying-bitmaps/cache-bitmap.html</a></li>
-<li><a href="http://android-developers.blogspot.com/2010/07/multithreading-for-performance.html">http://android-developers.blogspot.com/2010/07/multithreading-for-performance.html</a></li>
-<li><a href="https://github.com/thecodepath/android_guides/wiki/Sending-and-Managing-Network-Requests#displaying-remote-images-the-hard-way">https://github.com/thecodepath/android_guides/wiki/Sending-and-Managing-Network-Requests#displaying-remote-images-the-hard-way</a></li>
-<li><a href="http://androidsnips.blogspot.com/2010/08/lazy-loading-of-images-in-list-view-in.html">http://androidsnips.blogspot.com/2010/08/lazy-loading-of-images-in-list-view-in.html</a></li>
-</ul>
+</ol>
       </section>
 
       <footer>
