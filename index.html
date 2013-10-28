@@ -28,7 +28,7 @@
         <span class="ribbon-outer">
           <span class="ribbon-inner">
             <h1>Panache</h1>
-            <h2>Viewing images, with panache!</h2>
+            <h2>Viewing images, with panache.</h2>
           </span>
           <span class="left-tail"></span>
           <span class="right-tail"></span>
@@ -46,8 +46,8 @@
 
 
       <section id="main_content">
-        <h2>
-<a name="welcome-to-panache" class="anchor" href="#welcome-to-panache"><span class="octicon octicon-link"></span></a>Welcome to Panache!</h2>
+        <h1>
+<a name="welcome-to-panache" class="anchor" href="#welcome-to-panache"><span class="octicon octicon-link"></span></a>Welcome to Panache!</h1>
 
 <p>Panache loads images from the web and displays them in a ListView. It supports asynchronous loading of images, loads a scaled down version of the image to improve download speed, handles multithreading complexities introduced by the ListView and uses both memory and disk caching to speed things up.</p>
 
@@ -64,15 +64,22 @@
 </ol><p><strong>What can be improved:</strong></p>
 
 <ol>
-<li><p>The initial download of images is still a little choppy. It would be good to research what other techniques exist apart from the ones already used to improve the download speed.</p></li>
 <li><p>The UI can be improved by using larger images, and better formatting of text for the image names.</p></li>
 <li><p>It would be better to parse the image names out of the URL itself. I now cheat a bit and include it separately.</p></li>
+<li><p>Add more error handling for cases when there is no connection to the Internet, or when downloading an image fails due to a broken url.</p></li>
+<li><p>Ensure that the phone doesn't run out of memory or disk space while caching several large images. </p></li>
+<li><p>Make sure that the caches are being freed once the app is quit. </p></li>
 </ol><p><strong>Testing the app:</strong></p>
 
 <ol>
-<li><p>Test for OutOfMemory errors thrown by the memory cache by downloading images of very large size</p></li>
-<li><p>Test downloads in both phone orientations</p></li>
-<li><p>Test for running out of disk space by downloading long list of large images</p></li>
+<li><p>Test for OutOfMemory errors thrown by the memory cache by downloading images of very large size. Do the same to test the boundaries of the disk cache. </p></li>
+<li><p>Test runtime configuration changes such as change in phone orientation while the app is running.</p></li>
+<li><p>Test for running out of disk space by downloading long list of large images.</p></li>
+<li><p>Test how the app behaves when the phone is not connected to the Internet. </p></li>
+<li><p>User interaction testing to see if the app correctly responds to events such as scroll and select.</p></li>
+<li><p>Test if Panache handles lifecycle events such as onCreate() and pause events correctly. </p></li>
+<li><p>Test the app on different screen sizes and resolutions. </p></li>
+<li><p>Accessibility testing to make sure app can be used by users with varying abilities. </p></li>
 </ol>
       </section>
 
