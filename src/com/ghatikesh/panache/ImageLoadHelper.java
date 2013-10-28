@@ -32,26 +32,37 @@ public class ImageLoadHelper {
 		// Setup the memory and disk diskCache
 		memoryCache = setupMemoryCache();
 		cacheDir = setupDiskCache(context, DISK_CACHE_SUBDIR);
+
 	}
 
+	/**
+	 * Load Bitmap for the given url, into the the given ImageView.
+	 * @param url
+	 * @param imageView
+	 */
 	public void loadBitmap(String url, ImageView imageView) {
 		final String imageKey = url;
-
+		// if image is already in the memory cache, use that
 		final Bitmap bitmap = getBitmapFromMemCache(imageKey);
 		if (bitmap != null) {
 			imageView.setImageBitmap(bitmap);
+			// Cancel another running task if it's already associated with the ImageView.
 		} else if (cancelPotentialDownload(url, imageView)) {
 			BitmapDownloaderTask task = new BitmapDownloaderTask(imageView);
+			// Before executing the BitmapDownloaderTask, you create an
+			// DownloadedDrawable and bind it to the target ImageView:
 			DownloadedDrawable downloadedDrawable = new DownloadedDrawable(task);
 			imageView.setImageDrawable(downloadedDrawable);
 			task.execute(url);
 		}
 	}
 
-	public Bitmap getBitmapFromMemCache(String key) {
-		return memoryCache.get(key);
-	}
-
+	/**
+	 * Checks if another running task is already associated with the ImageView.
+	 * If so, it attempts to cancel the previous task by calling cancel(). In a
+	 * small number of cases, the new task data matches the existing task and
+	 * nothing further needs to happen.
+	 */
 	private static boolean cancelPotentialDownload(String url,
 			ImageView imageView) {
 		BitmapDownloaderTask bitmapDownloaderTask = getBitmapDownloaderTask(imageView);
@@ -59,29 +70,58 @@ public class ImageLoadHelper {
 		if (bitmapDownloaderTask != null) {
 			String bitmapUrl = bitmapDownloaderTask.url;
 			if ((bitmapUrl == null) || (!bitmapUrl.equals(url))) {
+				// Cancel previous task
 				bitmapDownloaderTask.cancel(true);
 			} else {
 				// The same URL is already being downloaded.
 				return false;
 			}
 		}
+		// No task associated with the ImageView, or an existing task was cancelled
 		return true;
 	}
 
+	/**
+	 * A helper method to retrieve the task associated with a particular
+	 * ImageView
+	 * 
+	 * @param ImageView
+	 *            imageView
+	 * @return BitmapDownloaderTask
+	 */
+	static BitmapDownloaderTask getBitmapDownloaderTask(ImageView imageView) {
+		if (imageView != null) {
+			Drawable drawable = imageView.getDrawable();
+			if (drawable instanceof DownloadedDrawable) {
+				DownloadedDrawable downloadedDrawable = (DownloadedDrawable) drawable;
+				return downloadedDrawable.getBitmapDownloaderTask();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * AsyncTask provides an easy way to execute some work in a background
+	 * thread and publish the results back on the UI thread.
+	 * BitmapDownloaderTask subclasses AsyncTask and overrides the provided
+	 * methods.
+	 */
 	private class BitmapDownloaderTask extends AsyncTask<String, Void, Bitmap> {
 		private final WeakReference<ImageView> ivImage;
 		String url;
 
 		public BitmapDownloaderTask(ImageView ivImage) {
+			// Use a WeakReference to ensure the ImageView can be garbage
+			// collected
 			this.ivImage = new WeakReference<ImageView>(ivImage);
 		}
 
+		/* Decode image in background. */
 		protected Bitmap doInBackground(String... addresses) {
 			final String imageKey = addresses[0];
-			// Check disk diskCache in background thread
+			// Check to see if bitmap is in the disk cache
 			Bitmap bitmap = getBitmapFromDiskCache(imageKey);
-
-			if (bitmap == null) { // Not found in disk diskCache, so Process as
+			if (bitmap == null) { // Not found in disk cache, so process as
 									// normal
 				// Convert string to URL
 				URL url = getUrlFromString(addresses[0]);
@@ -89,10 +129,8 @@ public class ImageLoadHelper {
 				InputStream in = getInputStream(url);
 				// Decode bitmap
 				bitmap = decodeBitmap(in, url);
-
-				// Add final bitmap to caches
+				// Add final bitmap to both memory and disk cache
 				addBitmapToCache(imageKey, bitmap);
-				//addBitmapToMemoryCache(String.valueOf(addresses[0]), bitmap);
 			}
 			// Return bitmap result
 			return bitmap;
@@ -122,21 +160,32 @@ public class ImageLoadHelper {
 			return in;
 		}
 
+		/*
+		 * Load a scaled down version of the Bitmap into memory by reading the
+		 * dimensions and type of the image data prior to construction (and
+		 * memory allocation) of the bitmap.
+		 */
 		private Bitmap decodeBitmap(InputStream in, URL url) {
 			Bitmap bitmap;
+			int reqWidth = 50; // required width of image we want to load
+			int reqHeight = 50; // required height of image we want to load
 			try {
 				// Creating a BufferedInputStream stream as we need to read the
-				// input stream twice and InputStream doesn't support that
-				// (unless you close and reopen it again which takes time)
+				// input stream twice. InputStream doesn't support that
+				// unless you close and reopen it again which takes time.
 				BufferedInputStream bis = new BufferedInputStream(in);
 
-				// First decode with inJustDecodeBounds=true to check dimensions
+				// First decode with inJustDecodeBounds=true to check
+				// dimensions. Setting the inJustDecodeBounds property to true
+				// while decoding avoids memory allocation, returning null for
+				// the bitmap object but setting outWidth and outHeight
 				final BitmapFactory.Options options = new BitmapFactory.Options();
 				options.inJustDecodeBounds = true;
 				BitmapFactory.decodeStream(bis, null, options);
 
-				// Calculate inSampleSize
-				options.inSampleSize = calculateInSampleSize(options, 50, 50);
+				//Calculate inSampleSize. For example, inSampleSize == 4 returns an image that
+				//is 1/4 the width/height of the original, and 1/16 the number of pixels.
+				options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
 
 				// Decode bitmap with inSampleSize set
 				options.inJustDecodeBounds = false;
@@ -153,21 +202,31 @@ public class ImageLoadHelper {
 			return bitmap;
 		}
 
+		/* Once complete, see if ImageView is still around and set bitmap if
+		 * this process is still associated with it.*/
 		@Override
 		protected void onPostExecute(Bitmap bitmap) {
 			if (ivImage != null) {
 				ImageView imageView = ivImage.get();
 				BitmapDownloaderTask bitmapDownloaderTask = getBitmapDownloaderTask(imageView);
-				// Change bitmap only if this process is still associated with
-				// it
+				// Change bitmap only if this process is still associated with it
+				// Check required to prevent multiple tasks from updating the same imageView
 				if (this == bitmapDownloaderTask) {
 					imageView.setImageBitmap(bitmap);
 				}
 			}
-
 		}
 	}
 
+	/**
+	 * If inSampleSize is set to a value > 1, it requests the decoder to
+	 * subsample the original image, returning a smaller image to save memory.
+	 * Any value <= 1 is treated the same as 1.
+	 * @param Options options
+	 * @param int reqWidth
+	 * @param int reqHeight
+	 * @return int inSampleSize
+	 */
 	public static int calculateInSampleSize(BitmapFactory.Options options,
 			int reqWidth, int reqHeight) {
 		// Raw height and width of image
@@ -177,64 +236,32 @@ public class ImageLoadHelper {
 
 		if (height > reqHeight || width > reqWidth) {
 
-			// Calculate ratios of height and width to requested height and
-			// width
+			// Calculate ratios of height and width to requested height and width
 			final int heightRatio = Math.round((float) height
 					/ (float) reqHeight);
 			final int widthRatio = Math.round((float) width / (float) reqWidth);
 
 			// Choose the smallest ratio as inSampleSize value, this will
-			// guarantee
-			// a final image with both dimensions larger than or equal to the
-			// requested height and width.
+			// guarantee a final image with both dimensions larger than or 
+			// equal to the requested height and width.
 			if (heightRatio < widthRatio) {
 				inSampleSize = heightRatio;
 			} else {
 				inSampleSize = widthRatio;
 			}
 		}
-		inSampleSize = (int) Math.pow(2d,
-				Math.floor(Math.log(inSampleSize) / Math.log(2d)));
+		//Using powers of 2 for inSampleSize values is faster and more efficient for the decoder.
+		inSampleSize = (int) Math.pow(2d, Math.floor(Math.log(inSampleSize) / Math.log(2d)));
 		return inSampleSize;
 	}
 
-	public void addBitmapToCache(String key, Bitmap bitmap) {
-		// Add to memory diskCache as before
-		if (getBitmapFromMemCache(key) == null) {
-			if(bitmap!=null) {
-				memoryCache.put(key, bitmap);
-			}
-		}
-
-		// Also add to disk diskCache
-		synchronized (diskCacheLock) {
-			if (diskCache != null && diskCache.get(key) == null) {
-				diskCache.put(key, bitmap);
-			}
-		}
-	}
-
-	public Bitmap getBitmapFromDiskCache(String key) {
-		synchronized (diskCacheLock) {
-			// Wait while disk diskCache is started from background thread
-			if (diskCache != null) {
-				return diskCache.get(key);
-			}
-		}
-		return null;
-	}
-
-	static BitmapDownloaderTask getBitmapDownloaderTask(ImageView imageView) {
-		if (imageView != null) {
-			Drawable drawable = imageView.getDrawable();
-			if (drawable instanceof DownloadedDrawable) {
-				DownloadedDrawable downloadedDrawable = (DownloadedDrawable) drawable;
-				return downloadedDrawable.getBitmapDownloaderTask();
-			}
-		}
-		return null;
-	}
-
+	/**
+	 * Create a dedicated Drawable subclass to store a reference back to the
+	 * BitmapDownloaderTask. In this case, a ColorDrawable is used so that a
+	 * white placeholder image can be displayed in the ImageView while the task
+	 * completes
+	 * 
+	 */
 	private class DownloadedDrawable extends ColorDrawable {
 		private final WeakReference<BitmapDownloaderTask> imageDownloaderTaskReference;
 
@@ -249,6 +276,50 @@ public class ImageLoadHelper {
 		}
 	}
 
+	/*********** Methods relating to memory and disk cache ***********/
+
+	/**
+	 * Add bitmap to memory and disk cache
+	 * @param key
+	 * @param bitmap
+	 */
+	public void addBitmapToCache(String key, Bitmap bitmap) {
+		if (getBitmapFromMemCache(key) == null) {
+			if (bitmap != null) {
+				memoryCache.put(key, bitmap); // Add to memory cache
+			}
+		}
+
+		// Also add to disk cache
+		synchronized (diskCacheLock) {
+			if (diskCache != null && diskCache.get(key) == null) {
+				diskCache.put(key, bitmap);
+			}
+		}
+	}
+
+	/**
+	 * Returns Bitmap for the given key if it exists in the memory cache.
+	 * Returns null if if doesn't exist.
+	 */
+	public Bitmap getBitmapFromMemCache(String key) {
+		return memoryCache.get(key);
+	}
+
+	/**
+	 * Returns Bitmap for the given key if it exists in the disk cache.
+	 * Returns null if if doesn't exist.
+	 */
+	public Bitmap getBitmapFromDiskCache(String key) {
+		synchronized (diskCacheLock) {
+			// Wait while disk cache is started from background thread
+			if (diskCache != null) {
+				return diskCache.get(key);
+			}
+		}
+		return null;
+	}
+	
 	/**
 	 * Get max available VM memory, and use 1/8th of it for the memory cache.
 	 * Exceeding the max available memory will throw an OutOfMemory exception.

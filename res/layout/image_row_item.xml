@@ -23,7 +23,8 @@
         android:layout_marginRight="10dp"
         android:layout_toRightOf="@+id/ivImage"
         android:gravity="center_vertical|center_horizontal"
-        android:paddingTop="10dp"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+        android:textColor="#7e7e7e"
+        android:textSize="15sp"
+        android:paddingBottom="5dp"/>
 
 </RelativeLayout>
