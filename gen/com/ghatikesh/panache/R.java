@@ -34,6 +34,7 @@ public final class R {
         public static final int list_selector_disabled_holo_light=0x7f02000a;
         public static final int list_selector_holo_light=0x7f02000b;
         public static final int mush=0x7f02000c;
+        public static final int panache=0x7f02000d;
     }
     public static final class id {
         public static final int imageView1=0x7f070001;
