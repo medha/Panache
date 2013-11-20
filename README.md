@@ -1,7 +1,7 @@
 # Welcome to Panache!
 Panache loads images from the web and displays them in a ListView. It supports asynchronous loading of images, loads a scaled down version of the image to improve download speed, handles multithreading complexities introduced by the ListView and uses both memory and disk caching to speed things up.
 
-![Screenshot](/res/drawable/panache.jpg "Screenshot")
+![Screenshot](/res/drawable/panache.png "Screenshot")
 
 It does not use any third party library such as the [Universal Image Loader](https://github.com/nostra13/Android-Universal-Image-Loader) to do this. 
 
